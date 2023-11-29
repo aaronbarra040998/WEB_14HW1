@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carga de archivos</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+
+    form {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    input[type="submit"] {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+
+    #file-info {
+      margin-top: 20px;
+      text-align: center;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    #file-info p {
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Carga de archivos</h1>
+    <form action="/upload" method="POST" enctype="multipart/form-data" id="upload-form">
+      <input type="file" name="file" accept=".pdf, .jpg" />
+      <input type="submit" value="Cargar" />
+    </form>
+
+    <div id="file-info">
+      <p id="filename"></p>
+      <p id="originalname"></p>
+      <p id="filesize"></p>
+      <p id="filetype"></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('upload-form');
+    const fileInfoDiv = document.getElementById('file-info');
+    const filenameP = document.getElementById('filename');
+    const originalnameP = document.getElementById('originalname');
+    const filesizeP = document.getElementById('filesize');
+    const filetypeP = document.getElementById('filetype');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const fileInput = document.querySelector('input[type="file"]');
+      const file = fileInput.files[0];
+
+      // Validar formato
+      if (!file.type.match(/^image\/(jpeg|jpg)$/) && file.type !== 'application/pdf') {
+        alert('Formato de archivo no permitido. Por favor, carga un archivo PDF o una imagen JPEG/JPG.');
+        return;
+      }
+
+      // Validar tamaño
+      const maxSizeKB = 350;
+      if (file.size > maxSizeKB * 1024) {
+        alert(`El archivo excede el tamaño máximo permitido de ${maxSizeKB} KB.`);
+        return;
+      }
+
+      const formData = new FormData(form);
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const fileInfo = await response.json();
+        showFileInfo(fileInfo);
+      } else {
+        fileInfoDiv.innerHTML = 'Error al cargar el archivo.';
+      }
+    });
+
+    function showFileInfo(fileInfo) {
+      filenameP.textContent = `Nombre: ${fileInfo.filename}`;
+      originalnameP.textContent = `Nombre original: ${fileInfo.originalname}`;
+      filesizeP.textContent = `Tamaño: ${fileInfo.size} bytes`;
+      filetypeP.textContent = `Tipo MIME: ${fileInfo.mimetype}`;
+
+      // Mostrar la información con una animación
+      fileInfoDiv.style.display = 'block';
+      setTimeout(() => {
+        fileInfoDiv.style.opacity = 1;
+      }, 100);
+    }
+  </script>
+</body>
+</html>
